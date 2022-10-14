@@ -29,7 +29,7 @@ import ProjectList from "./Components/Pages/ProjectList";
 // import Branches from "./Components/Pages/Branches";
 import { endPoint } from "../src/config/config";
 // import MultipleConfig from "./Components/Configuration/MultipleConfig";
-// import Addtasks from "./Components/Configuration/Addtasks";
+import Addtasks from "./Components/Configuration/Addtasks";
 
 function App() {
   const [isLogin, setisLogin] = useState(null);
@@ -116,6 +116,7 @@ function App() {
                 element={<MultipleConfig sidebar={sidebar} />}
               /> */}
               <Route path="/list" element={<ProjectList sidebar={sidebar} />} />
+              <Route path="/addtask" element={<Addtasks sidebar={sidebar} />} />
               {/* <Route path="/role" element={<AddRole sidebar={sidebar} />} />
               <Route
                 path="/modoule"
@@ -128,7 +129,6 @@ function App() {
                 path="/permission"
                 element={<RolePermission sidebar={sidebar} />}
               />
-              <Route path="/addtask" element={<Addtasks sidebar={sidebar} />} />{" "}
               */}
             </Routes>
           </>

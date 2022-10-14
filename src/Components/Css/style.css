@@ -8625,3 +8625,16 @@ button.close {
 .jodit-add-new-line_after {
     visibility: hidden;
 }
+
+.border_colr {
+    border-color: red;
+}
+
+.css-1s2u09g-controls {
+    border-color: red !important;
+
+}
+
+.impValid {
+    color: red;
+}

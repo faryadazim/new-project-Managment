@@ -8,7 +8,8 @@ import AvatarGroup from "react-avatar-group";
 import Creatable from "react-select/creatable";
 import { Link, useNavigate } from "react-router-dom";
 import JoditEditor from "jodit-react";
-
+import { Markup } from "interweave";
+import Avatar from "react-avatar";
 import ProgressBar from "@ramonak/react-progress-bar";
 //added new____
 import Modal from "react-bootstrap/Modal";
@@ -41,10 +42,13 @@ function ProjectList({ sidebar }) {
   const [statusData, setStatusData] = useState([]);
   const [priorityData, setPriorityData] = useState([]);
   const [projectType, setprojectType] = useState([]);
+  const [clientInfo, setclientInfo] = useState([]);
   const [togle, setTogle] = useState(1);
   const [show, setShow] = useState(Array.from(comData, () => false));
   const [taskToggle, setaskToggle] = useState(null);
   const [statusprogress, setStatusprogress] = useState([]);
+  const [dropdownToggle, setdropdownToggle] = useState(null);
+
   const editor = useRef(null);
   const onChngeContent = (value) => {
     console.log(value + "hello there was something");
@@ -71,6 +75,8 @@ function ProjectList({ sidebar }) {
     proPriority: "",
     start_date: "",
     end_date: "",
+    clientId: "",
+    projectLeader: "",
     users: [],
   });
 
@@ -227,10 +233,36 @@ function ProjectList({ sidebar }) {
         });
         setprojectType(optionProtype);
       });
+
+    //?Client info
+    await fetch(
+      "http://usman1206-001-site1.btempurl.com/api/client/GetAllclient",
+      {
+        method: "GET",
+        headers: {
+          Authorization:
+            "Bearer 1DKy2hsnj8KKWTeVaFWYmh-WmAfKqNCrQ3jZoheLbU8ps_qk6ZRlMV0cpn-sIXxK_GdZuEbLQlE23KggzmDfEYhiFDz9U-3l9zlYUbY-AYJcesk5iXzOE8IJsdQNSCF1HPthA09GSC8vfZJAijwKe5y3VeiMlNB6Tvx7ZV4c2U3QwI9SgsZXqX0J8vIxv-adApqkv8TZAJma5AVPaGPVhjNxmv-PVFYnKYZBniA5H6VxXrVr0m3g0un3PQy4ZfDFDbfhKYbWxeP5v-JQY4b94vh4lwSLVAN81b6hRU2xEKLg6pPDXJVIRZP2e_0Wd9bWJbI4BQBzMU27qaCtHyOilsUaoX-VyloD33SW5fS9WD7o_893eo7-6TYtQEzMwhBHbi1w-zGMYZ8LBoe6ogWq5UmPZAbvll35eaa2lswjtL02n9TBdd92CeUcZqlJ_JgjdDWri84xpSOvWWkQ8W7JfTg3ivspKBaERRKulz9h34mAMIPOrUD7_xaaQ5RaWaqq",
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((response) => response.json())
+      .then((result) => {
+        let optionStatus = [];
+
+        result.map((eachUser) => {
+          optionStatus.push({
+            value: eachUser.client_id,
+            label: eachUser.client_Name,
+          });
+        });
+        setclientInfo(optionStatus);
+      });
   };
 
   //! Post Data///shaidd is mein bhi kuch chage kia ho
   const addData = async () => {
+    console.log("clickedndcndkdn");
     const {
       project_name,
       pro_type,
@@ -241,12 +273,11 @@ function ProjectList({ sidebar }) {
       end_date,
     } = inpVal;
 
-    console.log(pro_type, "testsfd");
     if (
       project_name === "" ||
       pro_type?.value === "" ||
-      proStatus?.value === "" ||
-      proPriority === "" ||
+      proStatus?.value == "" ||
+      proPriority?.value === "" ||
       pro_description === "" ||
       start_date === "" ||
       end_date === ""
@@ -259,6 +290,8 @@ function ProjectList({ sidebar }) {
         pro_type: inpVal.pro_type?.value,
         proStatus: inpVal.proStatus?.value,
         proPriority: inpVal.proPriority?.value,
+        projectLeader: inpVal.projectLeader?.value,
+        clientId: inpVal.clientId?.value,
         start_date: inpVal.start_date,
         end_date: inpVal.end_date,
         users: inpVal.users.map((data) => {
@@ -404,6 +437,7 @@ function ProjectList({ sidebar }) {
   //!Delte data
 
   const deleteData = async (id) => {
+    console.log(inpVal.projectID + "hello someone");
     await fetch(
       `http://usman1206-001-site1.btempurl.com/api/project/delete?projectiD=${id}
 `,
@@ -432,9 +466,13 @@ function ProjectList({ sidebar }) {
         console.log(result + "some data");
       });
   };
-  //?Toggle data
+  //?Toggle data / dropdown toggle
   const stateToggle = (i) => {
     setTogle(i);
+  };
+  const dropToggle = (i) => {
+    setdropdownToggle(i);
+    // setdropdownToggle(null);
   };
   const togglde = (i, value) => {
     const newOpenState = [...show];
@@ -492,6 +530,32 @@ function ProjectList({ sidebar }) {
   }, []);
   return (
     <div>
+      {/* {taskToggle ? (
+        <>
+          {" "} */}
+      <Addtasks
+        style={{
+          display: taskToggle ? "block" : "none",
+        }}
+        setaskToggle={setaskToggle}
+        taskToggle={taskToggle}
+        sidebar={sidebar}
+        statusprogress={statusprogress}
+        getStatusDataByID={getStatusDataByID}
+        showmodel={showmodel}
+        handleclose={handleclose}
+        handleshow={handleshow}
+        setinpVal={setinpVal}
+        inpVal={inpVal}
+        statusData={statusData}
+        priorityData={priorityData}
+        projectType={projectType}
+        clientInfo={clientInfo}
+        handleChange={handleChange}
+        userData={userData}
+      />
+      {/* </> */}
+      {/* // ) : ( */}
       <div className="main-wrapper">
         <div className="page-wrapper">
           <div className="content container-fluid">
@@ -523,14 +587,22 @@ function ProjectList({ sidebar }) {
                   </a>
                   <div className="view-icons">
                     <a
-                      href="projects.html"
-                      className="grid-view btn btn-link active"
+                      className={
+                        togle === 1
+                          ? "grid-view btn btn-link active"
+                          : "grid-view btn btn-link"
+                      }
+                      onClick={() => stateToggle(1)}
                     >
                       <i className="fa fa-th" />
                     </a>
                     <a
-                      href="project-list.html"
-                      className="list-view btn btn-link"
+                      className={
+                        togle === 2
+                          ? "list-view btn btn-link active"
+                          : "list-view btn btn-link"
+                      }
+                      onClick={() => stateToggle(2)}
                     >
                       <i className="fa fa-bars" />
                     </a>
@@ -575,12 +647,13 @@ function ProjectList({ sidebar }) {
                 </a>
               </div>
             </div>
+            {/* //?Grid type */}
             <div className="row">
               {comData.map((item, index) => {
-                const Ongoing =
-                  item.projectstatus.pro_status_id == 2
-                    ? item.projectstatus?.pro_status
-                    : "";
+                // const Ongoing =
+                //   item.projectstatus.pro_status_id == 2
+                //     ? item.projectstatus?.pro_status
+                //     : "";
                 const rendomlyColor = item.proTypeID?.project_type_colur;
 
                 const Username = item.ProjectTeam.map((each) => {
@@ -605,7 +678,10 @@ function ProjectList({ sidebar }) {
                 });
                 return (
                   <>
-                    <div className="col-lg-4 col-sm-6 col-md-4 col-xl-3">
+                    <div
+                      className="col-lg-4 col-sm-6 col-md-4 col-xl-3"
+                      style={{ display: togle === 1 ? "block" : "none" }}
+                    >
                       <div className="card">
                         <div
                           className="card-body"
@@ -616,9 +692,55 @@ function ProjectList({ sidebar }) {
                             textAlign: "left",
                           }}
                         >
-                          <h4 className="project-title">
+                          <div className="dropdown dropdown-action profile-action">
+                            <a
+                              className="action-icon dropdown-toggle"
+                              data-bs-toggle="dropdown"
+                              aria-expanded="false"
+                            >
+                              <i
+                                className="material-icons"
+                                onClick={() => {
+                                  if (dropdownToggle == null) {
+                                    dropToggle(index);
+                                  } else {
+                                    setdropdownToggle(null);
+                                  }
+                                }}
+                              >
+                                more_vert
+                              </i>
+                            </a>
+                            <div
+                              className="dropdown-menu dropdown-menu-right"
+                              style={{
+                                marginLeft: "-454%",
+                                display:
+                                  dropdownToggle === index ? "block" : "none",
+                              }}
+                            >
+                              <a
+                                className="dropdown-item"
+                                data-bs-toggle="modal"
+                                data-bs-target="#delete_project"
+                                onClick={() => {
+                                  deleteData(item.projectID);
+                                }}
+                              >
+                                <i className="fas fa-trash m-r-5" /> Delete
+                              </a>
+                            </div>
+                          </div>
+
+                          <h4
+                            className="project-title"
+                            onClick={() => {
+                              Editform(item.projectID);
+                              setaskToggle(item);
+                              getStatusDataByID(item.projectID);
+                            }}
+                          >
                             <a>
-                              {" "}
                               {item.ProjectName.length > 15
                                 ? `${item.ProjectName.substring(0, 10)}...`
                                 : item.ProjectName}
@@ -626,9 +748,13 @@ function ProjectList({ sidebar }) {
                           </h4>
 
                           <p className="text-muted">
-                            {item.Description.length > 80
-                              ? `${item.Description.substring(0, 60)}...`
-                              : item.Description}
+                            <Markup
+                              content={
+                                item.Description.length > 80
+                                  ? `${item.Description.substring(0, 60)}...`
+                                  : item.Description
+                              }
+                            />
                           </p>
                           <div className="pro-deadline m-b-15">
                             <div className="sub-title">Deadline:</div>
@@ -637,23 +763,28 @@ function ProjectList({ sidebar }) {
                               {moment(item.EndDate).format("DD MMM YYYY ")}
                             </div>
                           </div>
-                          {/* <div className="project-members m-b-15">
+                          <div className="project-members m-b-15">
                             <div>Project Leader :</div>
-                            <ul className="team-members">
-                              <li>
-                                <a
-                                  href="#"
-                                  data-bs-toggle="tooltip"
-                                  title="Jeffery Lalor"
-                                >
-                                  <img
-                                    alt
-                                    src="assets/img/profiles/avatar-16.jpg"
-                                  />
-                                </a>
-                              </li>
-                            </ul>
-                          </div> */}
+                            <div>
+                              <Avatar
+                                name={item.project_leader?.UserName}
+                                size="20"
+                                value="*"
+                                // round="20px"
+                                // textSizeRatio={0.75}
+                                style={{ fontSize: "2px" }}
+                                round={true}
+                              />
+                              {/* <AvatarGroup
+                                avatars={item && item.project_leader}
+                                initialCharacters={1}
+                                max={3}
+                                size={20}
+                                displayAllOnHover
+                                shadow={2}
+                              /> */}
+                            </div>
+                          </div>
                           <div className="project-members m-b-15">
                             <div>Team :</div>
                             <div>
@@ -667,115 +798,6 @@ function ProjectList({ sidebar }) {
                                 displayAllOnHover
                                 shadow={2}
                               />
-                              {/* </a> */}
-                              {/* </li> */}
-
-                              {/* <li className="dropdown avatar-dropdown">
-                                <a
-                                  href="#"
-                                  className="all-users dropdown-toggle"
-                                  data-bs-toggle="dropdown"
-                                  aria-expanded="false"
-                                >
-                                  +15
-                                </a>
-                                <div className="dropdown-menu dropdown-menu-right">
-                                  <div className="avatar-group">
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-02.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-09.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-10.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-05.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-11.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-12.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-13.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-01.jpg"
-                                      />
-                                    </a>
-                                    <a className="avatar avatar-xs" href="#">
-                                      <img
-                                        alt
-                                        src="assets/img/profiles/avatar-16.jpg"
-                                      />
-                                    </a>
-                                  </div>
-                                  <div className="avatar-pagination">
-                                    <ul className="pagination">
-                                      <li className="page-item">
-                                        <a
-                                          className="page-link"
-                                          href="#"
-                                          aria-label="Previous"
-                                        >
-                                          <span aria-hidden="true">«</span>
-                                          <span className="visually-hidden">
-                                            Previous
-                                          </span>
-                                        </a>
-                                      </li>
-                                      <li className="page-item">
-                                        <a className="page-link" href="#">
-                                          1
-                                        </a>
-                                      </li>
-                                      <li className="page-item">
-                                        <a className="page-link" href="#">
-                                          2
-                                        </a>
-                                      </li>
-                                      <li className="page-item">
-                                        <a
-                                          className="page-link"
-                                          href="#"
-                                          aria-label="Next"
-                                        >
-                                          <span aria-hidden="true">»</span>
-                                          <span className="visually-hidden">
-                                            Next
-                                          </span>
-                                        </a>
-                                      </li>
-                                    </ul>
-                                  </div>
-                                </div>
-                              </li> */}
                             </div>
                           </div>
                           <p className="m-b-5">
@@ -799,6 +821,130 @@ function ProjectList({ sidebar }) {
                   </>
                 );
               })}
+            </div>
+
+            {/* //?List type */}
+
+            <div className="row">
+              <div
+                className="col-md-12"
+                style={{ display: togle === 2 ? "block" : "none" }}
+              >
+                <div className="table-responsive">
+                  <table className="table table-striped custom-table datatable">
+                    <thead>
+                      <tr>
+                        <th>Project</th>
+                        <th>Team</th>
+                        <th>Deadline</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comData.map((item, index) => {
+                        const Ongoing = item.projectstatus?.pro_status;
+                        const rendomlyColor =
+                          item.proTypeID?.project_type_colur;
+
+                        const Username = item.ProjectTeam.map((each) => {
+                          return each.UserName;
+                        });
+                        const UsernameAvater = item.ProjectTeam.map((each) => {
+                          return each.UserName.substring(0, 1).toUpperCase();
+                        });
+
+                        let progress = Math.round(
+                          (item.project_progress?.completedtask /
+                            item.project_progress?.count) *
+                            100
+                        );
+
+                        if (isNaN(progress)) progress = 0;
+
+                        const Profilpic = item.ProjectTeam.map((each) => {
+                          if (each.Profilepic === "") {
+                            return UsernameAvater;
+                          }
+                        });
+                        return (
+                          <>
+                            <tr>
+                              <td>
+                                <a>
+                                  {" "}
+                                  {item.ProjectName.length > 15
+                                    ? `${item.ProjectName.substring(0, 10)}...`
+                                    : item.ProjectName}
+                                </a>
+                              </td>
+
+                              <td style={{ paddingLeft: "3%" }}>
+                                <ul>
+                                  <AvatarGroup
+                                    avatars={Username}
+                                    initialCharacters={1}
+                                    max={3}
+                                    size={20}
+                                    displayAllOnHover
+                                    shadow={2}
+                                  />
+                                </ul>
+                              </td>
+                              <td>
+                                {" "}
+                                {moment(item.EndDate).format("DD MMM YYYY ")}
+                              </td>
+                              <td>
+                                <div className="dropdown action-label">
+                                  <a
+                                    className="btn btn-white btn-sm btn-rounded "
+                                    // data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                  >
+                                    {/* <i className="fa fa-dot-circle-o text-danger" />{" "} */}
+                                    {item.projectpriority?.pro_priority1}
+                                  </a>
+                                </div>
+                              </td>
+                              <td>
+                                <div className="dropdown action-label">
+                                  <a
+                                    className="btn btn-white btn-sm btn-rounded "
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                  >
+                                    {/* <i className="fa fa-dot-circle-o text-success" />{" "} */}
+                                    {Ongoing}
+                                  </a>
+                                </div>
+                              </td>
+
+                              <td>
+                                <div className="dropdown action-label">
+                                  <a
+                                    className="btn btn-white btn-sm btn-rounded "
+                                    // data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                    style={{
+                                      color: "white",
+                                      backgroundColor: rendomlyColor,
+                                    }}
+                                  >
+                                    {/* <i className="fa fa-dot-circle-o text-danger" />{" "} */}
+                                    {item.proTypeID?.project_type1}{" "}
+                                  </a>
+                                </div>
+                              </td>
+                            </tr>
+                          </>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -835,6 +981,7 @@ function ProjectList({ sidebar }) {
                       aria-hidden="true"
                       onClick={() => {
                         handleclose();
+                        setisFormValidate(true);
                       }}
                     >
                       ×
@@ -842,247 +989,284 @@ function ProjectList({ sidebar }) {
                   </button>
                 </div>
                 <div className="modal-body">
-                  <form>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            Project Name
-                          </label>
-                          <input className="form-control" type="text" />
-                        </div>
+                  <div className="row">
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          Project Name*
+                        </label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Project Name"
+                          contentEditable={inpVal}
+                          suppressContentEditableWarning={true}
+                          value={inpVal.project_name}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              project_name: e.target.value,
+                            });
+                          }}
+                        />
+                        {!isFormValidate && inpVal.project_name == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
                       </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            {" "}
-                            Project Type
-                            {/* <span className="imp">*</span> */}
-                          </label>
+                    </div>
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          {" "}
+                          Project Type *{/* <span className="imp">*</span> */}
+                        </label>
 
-                          <Creatable
-                            classNamePrefix="select"
-                            // onChange={(e) => {
-                            // }}
-                            isSearchable
-                            value={inpVal.pro_type}
-                            options={projectType}
-                            isClearable={false}
-                            onChange={(value) => {
-                              handleChange(value);
-                            }}
-                          />
-                        </div>
+                        <Creatable
+                          classNamePrefix="select"
+                          // onChange={(e) => {
+                          // }}
+                          isSearchable
+                          value={inpVal.pro_type}
+                          options={projectType}
+                          isClearable={false}
+                          onChange={(value) => {
+                            handleChange(value);
+                          }}
+                        />
+                        {!isFormValidate && inpVal.pro_type == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
                       </div>
                     </div>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            Start Date
-                          </label>
-                          {/* <div className="cal-icon"> */}
-                          <input
-                            name="name"
-                            type="date"
-                            className={`form-control ${
-                              !isFormValidate &&
-                              inpVal.start_date === "" &&
-                              "border_colr"
-                            }`}
-                            placeholder="Project Name"
-                            value={inpVal.start_date}
-                            onChange={(e) => {
-                              setinpVal({
-                                ...inpVal,
-                                start_date: e.target.value,
-                              });
-                            }}
-                          />
-                          {/* </div> */}
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            End Date
-                          </label>
-                          {/* <div className="cal-icon"> */}{" "}
-                          <input
-                            name="name"
-                            type="date"
-                            className={`form-control ${
-                              !isFormValidate &&
-                              inpVal.end_date === "" &&
-                              "border_colr"
-                            }`}
-                            placeholder="Project Name"
-                            value={inpVal.end_date}
-                            onChange={(e) => {
-                              setinpVal({
-                                ...inpVal,
-                                end_date: e.target.value,
-                              });
-                            }}
-                          />
-                          {/* </div> */}
-                        </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          Start Date
+                        </label>
+                        {/* <div className="cal-icon"> */}
+                        <input
+                          className="form-control"
+                          name="name"
+                          type="date"
+                          placeholder="Project Name"
+                          value={inpVal.start_date}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              start_date: e.target.value,
+                            });
+                          }}
+                        />
+                        {!isFormValidate && inpVal.start_date == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
+                        {/* </div> */}
                       </div>
                     </div>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            Project Status:
-                          </label>
-                          <Select
-                            className={`basic-single ${
-                              !isFormValidate &&
-                              inpVal.proStatus === "" &&
-                              "border_colr"
-                            }`}
-                            classNamePrefix="select"
-                            value={inpVal.proStatus}
-                            onChange={(e) => {
-                              setinpVal({
-                                ...inpVal,
-                                proStatus: e,
-                              });
-                              console.log(e, "protype");
-                            }}
-                            isSearchable
-                            options={statusData}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            Project Prority:
-                          </label>
-                          <Select
-                            className={`basic-single ${
-                              !isFormValidate &&
-                              inpVal.proPriority.label === "" &&
-                              "border_colr"
-                            }`}
-                            classNamePrefix="select"
-                            value={inpVal.proPriority}
-                            onChange={(e) => {
-                              setinpVal({
-                                ...inpVal,
-                                proPriority: e,
-                              });
-                              console.log(e, "protype");
-                            }}
-                            isSearchable
-                            options={priorityData}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            {" "}
-                            Select Team:
-                          </label>
-                          <Select
-                            className={`basic-multi-select ${
-                              !isFormValidate &&
-                              inpVal.users === "" &&
-                              "border_colr"
-                            }`}
-                            value={inpVal.users}
-                            isMulti
-                            onChange={(e) => {
-                              setinpVal({
-                                ...inpVal,
-                                users: e,
-                              });
-                              console.log(e, "multiSelector");
-                            }}
-                            name="colors"
-                            options={userData}
-                            classNamePrefix="select"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label
-                            style={{
-                              display: "flex",
-                              // marginTop: "1px",
-                              marginBottom: "1%",
-                            }}
-                          >
-                            Add Project Leader
-                          </label>
-                          <Select
-                            className={`basic-single ${
-                              !isFormValidate &&
-                              inpVal.proPriority.label === "" &&
-                              "border_colr"
-                            }`}
-                            classNamePrefix="select"
-                            // value={inpVal.proPriority}
-                            // onChange={(e) => {
-                            //   setinpVal({
-                            //     ...inpVal,
-                            //     proPriority: e,
-                            //   });
-                            //   console.log(e, "protype");
-                            // }}
-                            // isSearchable
-                            // options={priorityData}
-                          />
-                        </div>
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          End Date
+                        </label>
+                        <input
+                          className="form-control"
+                          name="name"
+                          type="date"
+                          placeholder="Project Name"
+                          value={inpVal.end_date}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              end_date: e.target.value,
+                            });
+                          }}
+                        />
+                        {!isFormValidate && inpVal.end_date == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
                       </div>
                     </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          Project Status:
+                        </label>
+                        <Select
+                          classNamePrefix="select"
+                          value={inpVal.proStatus}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              proStatus: e,
+                            });
+                            console.log(e, "protype");
+                          }}
+                          isSearchable
+                          options={statusData}
+                        />
+                        {!isFormValidate && inpVal.proStatus == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          Project Prority:
+                        </label>
+                        <Select
+                          classNamePrefix="select"
+                          value={inpVal.proPriority}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              proPriority: e,
+                            });
+                            console.log(e, "protype");
+                          }}
+                          isSearchable
+                          options={priorityData}
+                        />
+                        {!isFormValidate && inpVal.proPriority == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          {" "}
+                          Select Team:
+                        </label>
+                        <Select
+                          value={inpVal.users}
+                          isMulti
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              users: e,
+                            });
+                            console.log(e, "multiSelector");
+                          }}
+                          name="colors"
+                          options={userData}
+                          classNamePrefix="select"
+                        />
+                        {!isFormValidate && inpVal.users == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="col-sm-6">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          Add Project Leader
+                        </label>
+                        <Select
+                          classNamePrefix="select"
+                          value={inpVal.projectLeader}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              projectLeader: e,
+                            });
+                            console.log(e, "protype");
+                          }}
+                          // isSearchable
+                          options={userData}
+                        />
+                        {!isFormValidate && inpVal.projectLeader == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="row">
+                    <div className="col-sm-12">
+                      <div className="form-group">
+                        <label
+                          style={{
+                            display: "flex",
+                            // marginTop: "1px",
+                            marginBottom: "1%",
+                          }}
+                        >
+                          Client Info
+                        </label>
+                        <Select
+                          classNamePrefix="select"
+                          value={inpVal.clientId}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              clientId: e,
+                            });
+                            console.log(e, "protype");
+                          }}
+                          // isSearchable
+                          options={clientInfo}
+                        />
+                        {!isFormValidate && inpVal.clientId == "" && (
+                          <p className="impValid">Fill the Data*</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-                    <div className="form-group">
+                  <div className="row">
+                    <div className="col-sm-12">
                       <label
                         style={{
                           display: "flex",
@@ -1092,293 +1276,114 @@ function ProjectList({ sidebar }) {
                       >
                         Description
                       </label>
-                      {useMemo(
-                        () => (
-                          <JoditEditor
-                            ref={editor}
-                            // value={dochat.taskChat}
-                            config={{
-                              buttons: [
-                                "bold",
-                                "italic",
-                                "paragraph",
-                                "link",
-                                "image",
-                              ],
-                              readonly: false,
-                              toolbarAdaptive: false,
-                            }}
-                            // onChange={(e) => onChngeContent(e)}
-                          />
-                        ),
-                        []
-                      )}{" "}
-                    </div>
-                    {/* <div className="form-group">
-                      <label>Upload Files</label>
-                      <input className="form-control" type="file" />
-                    </div> */}
-                    <div className="submit-section">
-                      <button className="btn btn-primary submit-btn">
-                        Submit
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* <div
-            id="edit_project"
-            className="modal custom-modal fade"
-            role="dialog"
-          >
-            <div
-              className="modal-dialog modal-dialog-centered modal-lg"
-              role="document"
-            >
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Edit Project</h5>
-                  <button
-                    type="button"
-                    className="close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </button>
-                </div>
-                <div className="modal-body">
-                  <form>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Project Name</label>
-                          <input
-                            className="form-control"
-                            defaultValue="Project Management"
-                            type="text"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Client</label>
-                          <select className="select">
-                            <option>Global Technologies</option>
-                            <option>Delta Infotech</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Start Date</label>
-                          <div className="cal-icon">
-                            <input
-                              className="form-control datetimepicker"
-                              type="text"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>End Date</label>
-                          <div className="cal-icon">
-                            <input
-                              className="form-control datetimepicker"
-                              type="text"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-sm-3">
-                        <div className="form-group">
-                          <label>Rate</label>
-                          <input
-                            placeholder="$50"
-                            className="form-control"
-                            defaultValue="$5000"
-                            type="text"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-sm-3">
-                        <div className="form-group">
-                          <label>&nbsp;</label>
-                          <select className="select">
-                            <option>Hourly</option>
-                            <option selected>Fixed</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Priority</label>
-                          <select className="select">
-                            <option selected>High</option>
-                            <option>Medium</option>
-                            <option>Low</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Add Project Leader</label>
-                          <input className="form-control" type="text" />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Team Leader</label>
-                          <div className="project-members">
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              title="Jeffery Lalor"
-                              className="avatar"
-                            >
-                              <img
-                                src="assets/img/profiles/avatar-16.jpg"
-                                alt
-                              />
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Add Team</label>
-                          <input className="form-control" type="text" />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="form-group">
-                          <label>Team Members</label>
-                          <div className="project-members">
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              title="John Doe"
-                              className="avatar"
-                            >
-                              <img
-                                src="assets/img/profiles/avatar-16.jpg"
-                                alt
-                              />
-                            </a>
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              title="Richard Miles"
-                              className="avatar"
-                            >
-                              <img
-                                src="assets/img/profiles/avatar-09.jpg"
-                                alt
-                              />
-                            </a>
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              title="John Smith"
-                              className="avatar"
-                            >
-                              <img
-                                src="assets/img/profiles/avatar-10.jpg"
-                                alt
-                              />
-                            </a>
-                            <a
-                              href="#"
-                              data-bs-toggle="tooltip"
-                              title="Mike Litorus"
-                              className="avatar"
-                            >
-                              <img
-                                src="assets/img/profiles/avatar-05.jpg"
-                                alt
-                              />
-                            </a>
-                            <span className="all-team">+2</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label>Description</label>
                       <textarea
-                        rows={4}
-                        className="form-control"
-                        placeholder="Enter your message here"
-                        defaultValue={""}
+                        name=""
+                        id=""
+                        cols="90"
+                        rows="7"
+                        value={inpVal.pro_description}
+                        onChange={(e) => {
+                          setinpVal({
+                            ...inpVal,
+                            pro_description: e.target.value,
+                          });
+                        }}
                       />
+                      {!isFormValidate && inpVal.pro_description == "" && (
+                        <p className="impValid">Fill the Data*</p>
+                      )}
                     </div>
-                    <div className="form-group">
-                      <label>Upload Files</label>
-                      <input className="form-control" type="file" />
-                    </div>
-                    <div className="submit-section">
-                      <button className="btn btn-primary submit-btn">
-                        Save
-                      </button>
-                    </div>
-                  </form>
+                    {/* {useMemo(
+                      () => (
+                        <JoditEditor
+                          // ref={edito/r}
+                          value={inpVal.pro_description}
+                          config={{
+                            buttons: ["bold", "italic", "paragraph"],
+                            readonly: false,
+                            toolbarAdaptive: false,
+                            cleanHTML: {
+                              fillEmptyParagraph: false,
+                            },
+                          }}
+                          onChange={(e) => {
+                            setinpVal({
+                              ...inpVal,
+                              // pro_description: e,
+                            });
+                          }}
+                        />
+                      ),
+                      []
+                    )} */}
+                  </div>
+
+                  <div className="submit-section">
+                    <button
+                      className="btn btn-primary submit-btn"
+                      onClick={addData}
+                    >
+                      Submit
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-          <div
-            className="modal custom-modal fade"
-            id="delete_project"
-            role="dialog"
-          >
-            <div className="modal-dialog modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-body">
-                  <div className="form-header">
-                    <h3>Delete Project</h3>
-                    <p>Are you sure want to delete?</p>
-                  </div>
-                  <div className="modal-btn delete-action">
-                    <div className="row">
-                      <div className="col-6">
-                        <a
-                          href="javascript:void(0);"
-                          className="btn btn-primary continue-btn"
-                        >
-                          Delete
-                        </a>
-                      </div>
-                      <div className="col-6">
-                        <a
-                          href="javascript:void(0);"
-                          data-bs-dismiss="modal"
-                          className="btn btn-primary cancel-btn"
-                        >
-                          Cancel
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </div>
       </div>
-      ;
+      {/* // )}{" "} */};
     </div>
   );
 }
 
 export default ProjectList;
+
+/*  <div className="dropdown dropdown-action">
+                                  <a
+                                    className="action-icon dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                  >
+                                    <i
+                                      className="material-icons"
+                                      onClick={() => {
+                                        if (dropdownToggle == null) {
+                                          dropToggle(index);
+                                        } else {
+                                          setdropdownToggle(null);
+                                        }
+                                      }}
+                                    >
+                                      more_vert
+                                    </i>
+                                  </a>
+                                  <div
+                                    className="dropdown-menu dropdown-menu-right"
+                                    style={{
+                                      marginLeft: "-89%",
+                                      marginTop: "-21%",
+                                      display:
+                                        dropdownToggle === index
+                                          ? "block"
+                                          : "none",
+                                    }}
+                                  >
+                                    <a
+                                      className="dropdown-item"
+                                      href="#"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#edit_project"
+                                    >
+                                      <i className="fa fa-pencil " /> Edit
+                                    </a>
+                                    <a
+                                      className="dropdown-item"
+                                      href="#"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#delete_project"
+                                    >
+                                      <i className="fa fa-trash-o " /> Delete
+                                    </a>
+                                  </div>
+                                </div>*/
